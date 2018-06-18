@@ -34,22 +34,22 @@ def calc_prob(row, col):
     if matrix[row][col] == TUNNEL:
         prob_dict[index_map[tunnel_dict[row * m + col]]] = 1
     else:
-        if ((row - 1 >= 0)):
+        if ((row - 1 >= 0) and (matrix[row - 1][col] != OBSTACLE)):
             chances = chances + 1
             prob_dict[index(row - 1, col)] = -1
-        if (row + 1 < n):
+        if (row + 1 < n) and (matrix[row + 1][col] != OBSTACLE):
             chances = chances + 1
             prob_dict[index(row + 1, col)] = -1
-        if (col + 1 < m):
+        if (col + 1 < m) and (matrix[row][col + 1] != OBSTACLE):
             chances = chances + 1
             prob_dict[index(row, col + 1)] = -1
-        if (col - 1 >= 0):
+        if (col - 1 >= 0) and (matrix[row][col - 1] != OBSTACLE):
             chances = chances + 1
             prob_dict[index(row, col - 1)] = -1
-        for key, val in prob_dict.iteritems():
+        for key, val in prob_dict.items():
             if val == -1:
                 prob_dict[key] = 1.0 / chances
-        #print("row:"+str(row)+"col:"+str(col)+"matrix[row][col]:"+str(matrix[row][col])+"prob_dict[key]:"+str(prob_dict[key]))
+        # print("row:"+str(row)+"col:"+str(col)+"matrix[row][col]:"+str(matrix[row][col])+"prob_dict[key]:"+str(prob_dict[key]))
     return prob_dict
 
 
@@ -97,11 +97,10 @@ for row in range(n):
                 blocked.append(index(row, col))
                 continue
             transient.append(index(row, col))
-            for key, val in calc_prob(row, col).iteritems():
+            for key, val in calc_prob(row, col).items():
                 prob_mat[index(row, col)][key] = val
-                #print("row:"+str(row)+"key:"+str(key)+"val:"+str(val))
+                # print("row:"+str(row)+"key:"+str(key)+"val:"+str(val))
         elif matrix[row][col] == MINE:
-            print("Mine!!, "+str(index(row, col)))
             prob_mat[index(row, col)][index(row, col)] = 1
             mine.append(index(row, col))
         elif matrix[row][col] == EXIT:
@@ -109,7 +108,7 @@ for row in range(n):
             exit_.append(index(row, col))
 
 absorbing = mine + exit_ + blocked
-print("Matrix:"+str(matrix))
+print("Matrix:" + str(matrix))
 print("Probability Matrix:")
 print(str(prob_mat))
 Q = copy.deepcopy(prob_mat)
@@ -124,8 +123,13 @@ print("Transient Matrix:")
 print(str(Q))
 print("Absorbant Matrix:")
 print(str(R))
-N = np.matrix(np.identity(Q.shape[0])) - Q
+N = np.identity(Q.shape[0]) - Q
 print("Resultant N:" + str(N))
+print("shape:" + str(N.shape) + ", dtype:" + str(N.dtype))
+print("Determinant:" + np.linalg.det(N))
 N = np.linalg.inv(N)
 print("Inverse:")
 print(str(N))
+B = N.dot(R)
+print("Result:")
+print(str(B))

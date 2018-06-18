@@ -1,4 +1,61 @@
 from sys import stdin
+import numpy as np
+import copy
+
+TUNNEL = 'T'
+OBSTACLE = '#'
+START = 'A'
+MINE = '*'
+EXIT = '%'
+FREE = 'O'
+VISITED = 'V'
+
+
+def am_I_stuck(row, col):
+    global matrix
+    if (matrix[row][col] == TUNNEL):
+        return 0
+    blocked = 1
+    if ((row + 1 < n) and (matrix[row + 1][col] != OBSTACLE)):
+        blocked = 0
+    if ((row - 1 >= 0) and (matrix[row - 1][col] != OBSTACLE)):
+        blocked = 0
+    if ((col + 1 < m) and (matrix[row][col + 1] != OBSTACLE)):
+        blocked = 0
+    if ((col - 1 >= 0) and (matrix[row][col - 1] != OBSTACLE)):
+        blocked = 0
+    return blocked
+
+
+def calc_prob(row, col):
+    global matrix, m
+    prob_dict = {}
+    chances = 0
+    if matrix[row][col] == TUNNEL:
+        prob_dict[index_map[tunnel_dict[row * m + col]]] = 1
+    else:
+        if ((row - 1 >= 0)):
+            chances = chances + 1
+            prob_dict[index(row - 1, col)] = -1
+        if (row + 1 < n):
+            chances = chances + 1
+            prob_dict[index(row + 1, col)] = -1
+        if (col + 1 < m):
+            chances = chances + 1
+            prob_dict[index(row, col + 1)] = -1
+        if (col - 1 >= 0):
+            chances = chances + 1
+            prob_dict[index(row, col - 1)] = -1
+        for key, val in prob_dict.iteritems():
+            if val == -1:
+                prob_dict[key] = 1.0 / chances
+        #print("row:"+str(row)+"col:"+str(col)+"matrix[row][col]:"+str(matrix[row][col])+"prob_dict[key]:"+str(prob_dict[key]))
+    return prob_dict
+
+
+def index(row, col):
+    global index_map, m
+    return(index_map[row * m + col])
 
 
 inp = stdin.readline().split()
@@ -13,5 +70,62 @@ for i in range(k):
     tunnel = [int(x) - 1 for x in tunnel]
     matrix[tunnel[0]][tunnel[1]] = TUNNEL
     matrix[tunnel[2]][tunnel[3]] = TUNNEL
-    tunnel_dict[(tunnel[0]) * m + tunnel[1]] = [tunnel[2], tunnel[3]]
-    tunnel_dict[(tunnel[2]) * m + tunnel[3]] = [tunnel[0], tunnel[1]]
+    tunnel_dict[(tunnel[0]) * m + tunnel[1]] = tunnel[2] * m + tunnel[3]
+    tunnel_dict[(tunnel[2]) * m + tunnel[3]] = tunnel[0] * m + tunnel[1]
+
+index_map = {}
+counter = 0
+for row in range(n):
+    for col in range(m):
+        if (matrix[row][col] != OBSTACLE):
+            index_map[row * m + col] = counter
+            counter = counter + 1
+
+prob_mat = np.zeros((counter, counter), dtype=float)
+transient = []
+absorbing = []
+mine = []
+exit_ = []
+blocked = []
+for row in range(n):
+    for col in range(m):
+        if (matrix[row][col] == OBSTACLE):
+            continue
+        elif ((matrix[row][col] == START) or (matrix[row][col] == FREE) or
+                (matrix[row][col] == TUNNEL)):
+            if (am_I_stuck(row, col)):
+                blocked.append(index(row, col))
+                continue
+            transient.append(index(row, col))
+            for key, val in calc_prob(row, col).iteritems():
+                prob_mat[index(row, col)][key] = val
+                #print("row:"+str(row)+"key:"+str(key)+"val:"+str(val))
+        elif matrix[row][col] == MINE:
+            print("Mine!!, "+str(index(row, col)))
+            prob_mat[index(row, col)][index(row, col)] = 1
+            mine.append(index(row, col))
+        elif matrix[row][col] == EXIT:
+            prob_mat[index(row, col)][index(row, col)] = 1
+            exit_.append(index(row, col))
+
+absorbing = mine + exit_ + blocked
+print("Matrix:"+str(matrix))
+print("Probability Matrix:")
+print(str(prob_mat))
+Q = copy.deepcopy(prob_mat)
+R = copy.deepcopy(prob_mat)
+for count, i in enumerate(absorbing):
+    Q = np.delete(Q, (i - count), axis=0)
+    Q = np.delete(Q, (i - count), axis=1)
+    R = np.delete(R, (i - count), axis=0)
+for count, i in enumerate(transient):
+    R = np.delete(R, (i - count), axis=1)
+print("Transient Matrix:")
+print(str(Q))
+print("Absorbant Matrix:")
+print(str(R))
+N = np.matrix(np.identity(Q.shape[0])) - Q
+print("Resultant N:" + str(N))
+N = np.linalg.inv(N)
+print("Inverse:")
+print(str(N))

@@ -13,8 +13,6 @@ VISITED = 'V'
 
 def am_I_stuck(row, col):
     global matrix
-    if (matrix[row][col] == TUNNEL):
-        return 0
     blocked = 1
     if ((row + 1 < n) and (matrix[row + 1][col] != OBSTACLE)):
         blocked = 0
@@ -87,6 +85,7 @@ absorbing = []
 mine = []
 exit_ = []
 blocked = []
+starting_point = 0
 for row in range(n):
     for col in range(m):
         if (matrix[row][col] == OBSTACLE):
@@ -95,8 +94,11 @@ for row in range(n):
                 (matrix[row][col] == TUNNEL)):
             if (am_I_stuck(row, col)):
                 blocked.append(index(row, col))
+                prob_mat[index(row, col)][index(row, col)] = 1
                 continue
             transient.append(index(row, col))
+            if (matrix[row][col] == START):
+                starting_point = len(transient) - 1
             for key, val in calc_prob(row, col).items():
                 prob_mat[index(row, col)][key] = val
                 # print("row:"+str(row)+"key:"+str(key)+"val:"+str(val))
@@ -113,7 +115,9 @@ print("Probability Matrix:")
 print(str(prob_mat))
 Q = copy.deepcopy(prob_mat)
 R = copy.deepcopy(prob_mat)
-for count, i in enumerate(absorbing):
+transient.sort()
+for count, i in enumerate(sorted(absorbing)):
+    print("count:"+str(count)+"i:"+str(i))
     Q = np.delete(Q, (i - count), axis=0)
     Q = np.delete(Q, (i - count), axis=1)
     R = np.delete(R, (i - count), axis=0)
@@ -126,10 +130,16 @@ print(str(R))
 N = np.identity(Q.shape[0]) - Q
 print("Resultant N:" + str(N))
 print("shape:" + str(N.shape) + ", dtype:" + str(N.dtype))
-print("Determinant:" + np.linalg.det(N))
+print("Determinant of Q:" + str(np.linalg.det(Q)))
+print("Determinant of N:" + str(np.linalg.det(N)))
 N = np.linalg.inv(N)
 print("Inverse:")
 print(str(N))
 B = N.dot(R)
 print("Result:")
 print(str(B))
+prob = 0
+for i in exit_:
+    pos = absorbing.index(i)
+    prob = prob + B[starting_point][pos]
+print("Final Probability:" + str(prob))

@@ -2,6 +2,9 @@ from sys import stdin
 import numpy as np
 import copy
 
+np.set_printoptions(threshold='nan')
+out_format = "%.3f"
+
 TUNNEL = 'T'
 OBSTACLE = '#'
 START = 'A'
@@ -28,7 +31,7 @@ def am_I_stuck(row, col):
 def calc_prob(row, col):
     global matrix, m
     prob_dict = {}
-    chances = 0
+    chances = 0.0
     if matrix[row][col] == TUNNEL:
         prob_dict[index_map[tunnel_dict[row * m + col]]] = 1
     else:
@@ -44,9 +47,15 @@ def calc_prob(row, col):
         if (col - 1 >= 0) and (matrix[row][col - 1] != OBSTACLE):
             chances = chances + 1
             prob_dict[index(row, col - 1)] = -1
-        for key, val in prob_dict.items():
-            if val == -1:
-                prob_dict[key] = 1.0 / chances
+    total_chance = 1.0
+    #if matrix[row][col] == TUNNEL:
+     #   prob_dict[index_map[tunnel_dict[row * m + col]]] = \
+      #      chances / (chances + 1)
+       # total_chance = 1 - (chances / (chances + 1))
+    for key, val in prob_dict.items():
+        if val == -1:
+            prob_dict[key] = total_chance / chances
+
         # print("row:"+str(row)+"col:"+str(col)+"matrix[row][col]:"+str(matrix[row][col])+"prob_dict[key]:"+str(prob_dict[key]))
     return prob_dict
 
@@ -113,20 +122,22 @@ absorbing = mine + exit_ + blocked
 print("Matrix:" + str(matrix))
 print("Probability Matrix:")
 print(str(prob_mat))
+np.savetxt("prob_mat.csv", prob_mat, delimiter=",", fmt=out_format)
 Q = copy.deepcopy(prob_mat)
 R = copy.deepcopy(prob_mat)
-transient.sort()
-for count, i in enumerate(sorted(absorbing)):
-    print("count:"+str(count)+"i:"+str(i))
-    Q = np.delete(Q, (i - count), axis=0)
-    Q = np.delete(Q, (i - count), axis=1)
-    R = np.delete(R, (i - count), axis=0)
-for count, i in enumerate(transient):
-    R = np.delete(R, (i - count), axis=1)
+transient.sort(reverse=True)
+for count in sorted(absorbing, reverse=True):
+    Q = np.delete(Q, count, axis=0)
+    Q = np.delete(Q, count, axis=1)
+    R = np.delete(R, count, axis=0)
+for count in transient:
+    R = np.delete(R, count, axis=1)
 print("Transient Matrix:")
 print(str(Q))
+np.savetxt("transient.csv", Q, delimiter=",", fmt=out_format)
 print("Absorbant Matrix:")
 print(str(R))
+np.savetxt("absorbant.csv", R, delimiter=",", fmt=out_format)
 N = np.identity(Q.shape[0]) - Q
 print("Resultant N:" + str(N))
 print("shape:" + str(N.shape) + ", dtype:" + str(N.dtype))
@@ -135,10 +146,12 @@ print("Determinant of N:" + str(np.linalg.det(N)))
 N = np.linalg.inv(N)
 print("Inverse:")
 print(str(N))
+np.savetxt("inverse.csv", N, delimiter=",", fmt=out_format)
 B = N.dot(R)
 print("Result:")
 print(str(B))
-prob = 0
+np.savetxt("result.csv", B, delimiter=",", fmt=out_format)
+prob = 0.0
 for i in exit_:
     pos = absorbing.index(i)
     prob = prob + B[starting_point][pos]

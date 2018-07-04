@@ -12,11 +12,16 @@ for i in range(pair):
     inp = stdin.readline().split()
     inp = [int(x) for x in inp]
     found = 0
+    last_item = set()
     for item in list_of_sets:
         if ((inp[0] in item) or (inp[1] in item)):
+            if found:
+                last_item |= item
+                list_of_sets.remove(item)
             item.add(inp[0])
             item.add(inp[1])
             found = 1
+            last_item = item
     if (found == 0):
         temp_set = set()
         temp_set.add(inp[0])

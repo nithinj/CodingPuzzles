@@ -9,10 +9,22 @@ import sys
 DEBUG = 0
 
 
+def find_index(exp_list, num, low, high):
+    while(low <= high):
+        mid = int((low + high) / 2)
+        if num == exp_list[mid]:
+            return mid
+        elif num > exp_list[mid]:
+            low = mid + 1
+        elif num < exp_list[mid]:
+            high = mid - 1
+
+
 def activityNotifications(expenditure, d):
     notification = 0
     sorted_ = 0
     exp_list = []
+
     for i in range(d, len(expenditure)):
         if sorted_ == 0:
             exp_list = expenditure[i - d: i]
@@ -22,8 +34,10 @@ def activityNotifications(expenditure, d):
             next_ = expenditure[i - 1]
             removal = expenditure[i - d - 1]
             if (next_ != removal):
-                exp_list.remove(expenditure[i - d - 1])
-                (low, high) = (0, len(exp_list))
+                (low, high) = (0, len(exp_list) - 1)
+                del exp_list[find_index(exp_list, expenditure[
+                                        i - d - 1], low, high)]
+
                 while(low <= high):
                     mid = int((low + high) / 2)
                     elm = exp_list[mid]

@@ -1,6 +1,7 @@
 #!/bin/python3
 
 import sys
+from copy import deepcopy
 
 
 def possible_move(start, row, col):
@@ -14,27 +15,28 @@ def possible_move(start, row, col):
 
 
 def compute(row, col, start, counter, mat):
-    print("compute(" + str(row) + ", " + str(col) +
-          ", " + str(start) + ", " + str(counter) + ")")
     global end, count
+    if (counter > min(count)):
+        return
+    # print("compute(" + str(row) + ", " + str(col) +
+       #   ", " + str(start) + ", " + str(counter) + ")")
     mat[start[0]][start[1]] = 1
     for i in range(4):
         col *= -1
-        if (i > 1 and row > 0):
+        if (i == 2):
             row *= -1
         for j in range(2):
             next = possible_move(start, row, col)
-            print("next:" + str(next))
             if next:
+                #print("next:" + str(next))
                 if (next == end):
                     count.append(counter)
-                    print("target")
+                #    print("target: " + str(next))
                 elif mat[next[0]][next[1]] == 1:
-                    print("hit once before")
-                    return
+                  #  print("hit once before")
+                    continue
                 else:
-                    print("computing again!")
-                    compute(row, col, next, counter + 1, mat)
+                    compute(row, col, next, counter + 1, deepcopy(mat))
             row, col = col, row
 
 
@@ -51,8 +53,9 @@ for i in range(n):
 for i in range(n - 1):
     for j in range(n - 1):
         if out[i][j] == 0:
-            compute(i + 1, j + 1, start, 1, mat)
+            compute(i + 1, j + 1, start, 1, deepcopy(mat))
             out[i][j] = out[j][i] = -1 if min(count) == 100 else min(count)
             count = [100]
+        #print("out[" + str(i) + "][" + str(j) + "] : " + str(out[i][j]))
 for i in range(n - 1):
     print(*out[i])

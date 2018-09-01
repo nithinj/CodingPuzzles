@@ -2,11 +2,12 @@
 
 import sys
 from copy import deepcopy
+from collections import deque
+from math import log
 
 
-def possible_move(start, row, col):
+def possible_move(next):
     global end
-    next = (start[0] + row, start[1] + col)
     if ((next[0] >= 0) and (next[0] <= end[0]) and
             (next[1] >= 0) and (next[1] <= end[1])):
         return next
@@ -14,38 +15,49 @@ def possible_move(start, row, col):
         return None
 
 
-def compute(row, col, start, counter, mat):
-    global end, count
-    if (counter >= min(count)):
-        return
-    # print("compute(" + str(row) + ", " + str(col) +
-    #      ", " + str(start) + ", " + str(counter) + ")")
-    mat[start[0]][start[1]] = 1
-    for i in range(4):
-        col *= -1
-        if (i == 2):
-            row *= -1
-        for j in range(2):
-            next = possible_move(start, row, col)
-            if next:
-                #print("next:" + str(next))
-                if (next == end):
-                    count.append(counter)
-                    #print("target: " + str(next))
-                elif mat[next[0]][next[1]] == 1:
-                    #print("hit once before")
-                    pass
-                else:
-                    compute(row, col, next, counter + 1, deepcopy(mat))
-            row, col = col, row
+def compute(row, col, mat):
+    global end
+
+    que = deque()
+    que.append((0, 0))
+    que.append(None)
+    level = 0
+    while(len(que) > 0):
+        start = que.popleft()
+
+        if(start == None):
+            level += 1
+            que.append(None)
+            if(que[0] == None):
+                break
+            # You are encountering two consecutive `None` means, you visited
+            # all the nodes.
+            else:
+                continue
+
+        if (start == end):
+            return level
+        elif mat[start[0]][start[1]] == 1:
+            # hit once before
+            pass
+        else:
+            mat[start[0]][start[1]] = 1
+            if (row != col):
+                next_list = [(start[0] + row, start[1] + col), (start[0] + row, start[1] - col), (start[0] - row, start[1] + col), (start[0] - row, start[1] - col),
+                             (start[0] + col, start[1] + row), (start[0] + col, start[1] - row), (start[0] - col, start[1] + row), (start[0] - col, start[1] - row)]
+            else:
+                next_list = [(start[0] + row, start[1] + col), (start[0] + row, start[1] - col),
+                             (start[0] - row, start[1] + col), (start[0] - row, start[1] - col)]
+            for next in next_list:
+                if (possible_move(next)):
+                    que.append(next)
+    return -1
 
 
 out = []
 mat = []
 n = int(input())
-start = (0, 0)
 end = (n - 1, n - 1)
-count = [sys.maxsize]
 for i in range(n - 1):
     out.append([0] * (n - 1))
 for i in range(n):
@@ -53,10 +65,6 @@ for i in range(n):
 for i in range(n - 1):
     for j in range(n - 1):
         if out[i][j] == 0:
-            compute(i + 1, j + 1, start, 1, deepcopy(mat))
-            out[i][j] = out[j][i] = - \
-                1 if min(count) == sys.maxsize else min(count)
-            count = [sys.maxsize]
-        #print("out[" + str(i) + "][" + str(j) + "] : " + str(out[i][j]))
+            out[i][j] = out[j][i] = compute(i + 1, j + 1, deepcopy(mat))
 for i in range(n - 1):
     print(*out[i])

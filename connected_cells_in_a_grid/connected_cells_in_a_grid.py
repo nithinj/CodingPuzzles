@@ -9,7 +9,8 @@ def calc(row, col):
         connectedCell.track[row][col] = 1
         return (1 + calc(row + 1, col) + calc(row - 1, col) +
                 calc(row, col + 1) + calc(row, col - 1) +
-                calc(row + 1, col + 1) + calc(row - 1, col - 1))
+                calc(row + 1, col + 1) + calc(row - 1, col - 1) +
+                calc(row + 1, col - 1) + calc(row - 1, col + 1))
     return 0
 
 

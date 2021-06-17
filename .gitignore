@@ -2,3 +2,5 @@
 .pydevproject
 HackerRank/a.out
 .vscode
+interviews/
+tmp/
